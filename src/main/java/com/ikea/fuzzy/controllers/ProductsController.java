@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@CrossOrigin(origins = "*")
 public class ProductsController {
 
     @Autowired
@@ -39,5 +40,4 @@ public class ProductsController {
     public Product getProductById(@RequestParam Long id) {
         return productService.getProduct(id);
     }
-
 }

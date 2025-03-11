@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -32,18 +33,23 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product getProduct(Long id) {
-        return productRepo.getProductById(id).orElse(null);
+        return productRepo.getProductById(id).orElseThrow();
     }
 
     @Override
     public Page<Product> searchProducts(String keyword, PageRequest pageRequest) {
         List<Product> products = productRepo.getProducts();
+
+        // search in name, description and category
         List<Product> productsByKeyWord = products.stream()
-                .sorted((p1, p2) -> {
-                    int dist1 = DamerauLevenshtein.compute(keyword, p1.name());
-                    int dist2 = DamerauLevenshtein.compute(keyword, p2.name());
-                    return Integer.compare(dist1, dist2);
-                })// Limit results to top 10 closest matches
+                .sorted(Comparator.comparingInt(p -> {
+                    int nameDist = DamerauLevenshtein.compute(keyword, p.name());
+                    int descDist = DamerauLevenshtein.compute(keyword, p.description());
+                    int categoryDist = DamerauLevenshtein.compute(keyword, p.category());
+
+                    // Use the minimum distance
+                    return Math.min(nameDist, Math.min(descDist, categoryDist));
+                }))
                 .toList();
 
         int start = (int) pageRequest.getOffset(); // Get the starting index
